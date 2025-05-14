@@ -3,18 +3,13 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
-)
-
 type Status = 'loading' | 'success' | 'expired' | 'error'
 
 export default function ConfirmationPage() {
   const [status, setStatus] = useState<Status>('loading')
 
   useEffect(() => {
-    const fragment = window.location.hash.substring(1) // Remove the leading '#'
+    const fragment = window.location.hash.substring(1)
     const params = new URLSearchParams(fragment)
 
     const accessToken = params.get('access_token')
@@ -23,6 +18,12 @@ export default function ConfirmationPage() {
     if (errorCode === 'otp_expired') {
       setStatus('expired')
     } else if (accessToken) {
+      // 🛠️ Initialize Supabase inside the effect
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+
       supabase.auth.getUser(accessToken).then(({ data, error }) => {
         if (error || !data.user) {
           setStatus('error')
